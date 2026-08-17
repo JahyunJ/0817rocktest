@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>암석 맞히기 · 지구과학 퀴즈</title>
+<style>
+  :root{
+    --stone:#2b2723;--slate:#3d3a35;--paper:#e9e3d6;--paper-2:#f2ede2;
+    --ochre:#b06a2c;--moss:#5b6b3a;--rust:#a2402f;--line:#c9bfaa;--ink:#231f1b;--muted:#7a7264;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    background:radial-gradient(120% 80% at 50% -10%, #f5f0e6 0%, var(--paper) 55%, #ded6c4 100%);
+    color:var(--ink);min-height:100vh;min-height:100dvh;
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:24px 16px calc(48px + env(safe-area-inset-bottom));
+  }
+  .app{width:100%;max-width:620px}
+  .masthead{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap}
+  .eyebrow{font-family:"Helvetica Neue",Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:11px;color:var(--ochre);font-weight:700}
+  h1{font-size:clamp(28px,7vw,44px);line-height:.98;margin:2px 0 0;font-weight:800;letter-spacing:-.01em;color:var(--stone)}
+  h1 .sub{display:block;font-size:.44em;font-weight:600;color:var(--muted);letter-spacing:.02em;margin-top:8px;line-height:1.3}
+  .rule{height:2px;background:linear-gradient(90deg,var(--stone),transparent);margin:16px 0 22px;border-radius:2px}
+  .card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 0 #fff inset,0 18px 40px -28px rgba(35,31,27,.6);overflow:hidden}
+
+  .login{padding:30px 26px}
+  .login p{color:var(--slate);line-height:1.6;font-size:15px;margin:0 0 22px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .field input{width:100%;font-family:inherit;font-size:16px;color:var(--ink);padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;-webkit-appearance:none;appearance:none}
+  .field input:focus{outline:3px solid var(--ochre);outline-offset:1px;border-color:var(--ochre)}
+  .field .err{color:var(--rust);font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px;margin-top:6px;display:none}
+  .field.invalid .err{display:block}
+  .field.invalid input{border-color:var(--rust)}
+  .cats{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 24px}
+  .chip{font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px;letter-spacing:.04em;padding:6px 11px;border:1px solid var(--line);border-radius:999px;color:var(--slate);background:#fff}
+  .btn{font-family:"Helvetica Neue",Arial,sans-serif;cursor:pointer;border:none;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:.02em;padding:15px 22px;transition:transform .08s ease,filter .15s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--stone);color:var(--paper);width:100%}
+  .btn-primary:hover{filter:brightness(1.12)}
+  .btn:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+
+  .qhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line);font-family:"Helvetica Neue",Arial,sans-serif;font-size:13px;color:var(--muted)}
+  .qhead .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qhead .who b{color:var(--stone)}
+  .qhead .score b{color:var(--stone)}
+  .qhead .count{flex:none}
+  .progress{height:4px;background:#d9d0bd}
+  .progress > i{display:block;height:100%;background:var(--ochre);transition:width .35s ease}
+  .photo{position:relative;aspect-ratio:16/10;background:#cfc6b4;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .photo img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .3s ease}
+  .photo .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-family:"Helvetica Neue",Arial,sans-serif;font-size:13px;text-align:center;padding:16px}
+  .photo .ph svg{width:40px;height:40px;opacity:.5}
+  .credit{position:absolute;bottom:0;right:0;background:rgba(35,31,27,.55);color:#f2ede2;font-family:"Helvetica Neue",Arial,sans-serif;font-size:10px;padding:3px 8px;letter-spacing:.03em}
+  .prompt{padding:16px 20px 4px;font-size:15px;color:var(--slate)}
+  .prompt b{color:var(--stone)}
+  .opts{padding:8px 16px 16px;display:grid;gap:10px}
+  .opt{text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:16px;color:var(--ink);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;transition:border-color .12s,background .12s,transform .06s}
+  .opt .k{font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px;font-weight:700;width:24px;height:24px;flex:none;border-radius:6px;display:grid;place-items:center;background:var(--paper);color:var(--slate);border:1px solid var(--line)}
+  .opt:hover:not(:disabled){border-color:var(--ochre);transform:translateX(2px)}
+  .opt:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+  .opt:disabled{cursor:default}
+  .opt.correct{background:#eef0e2;border-color:var(--moss)}
+  .opt.correct .k{background:var(--moss);color:#fff;border-color:var(--moss)}
+  .opt.wrong{background:#f4e6e2;border-color:var(--rust)}
+  .opt.wrong .k{background:var(--rust);color:#fff;border-color:var(--rust)}
+  .opt.dim{opacity:.5}
+  .explain{margin:0 16px 16px;padding:14px 16px;border-left:3px solid var(--ochre);background:#fbf8f1;border-radius:0 8px 8px 0;font-size:14.5px;line-height:1.6;color:var(--slate);display:none}
+  .explain.show{display:block}
+  .explain .verdict{font-family:"Helvetica Neue",Arial,sans-serif;font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;display:block}
+  .explain.ok .verdict{color:var(--moss)}
+  .explain.no .verdict{color:var(--rust)}
+  .next{padding:0 16px 20px;display:none}
+  .next.show{display:block}
+  .next .btn{width:100%}
+  .result{padding:32px 26px;text-align:center}
+  .result .grade{font-family:"Helvetica Neue",Arial,sans-serif;letter-spacing:.24em;text-transform:uppercase;font-size:12px;color:var(--muted);margin-bottom:6px}
+  .result .big{font-size:clamp(44px,13vw,68px);font-weight:800;color:var(--stone);line-height:1}
+  .result .big span{color:var(--ochre)}
+  .result h2{font-size:24px;margin:8px 0 10px;color:var(--stone)}
+  .result p{color:var(--slate);line-height:1.6;margin:0 auto 20px;max-width:42ch}
+  .savebar{font-family:"Helvetica Neue",Arial,sans-serif;font-size:13px;margin:0 auto 20px;padding:10px 14px;border-radius:8px;max-width:38ch}
+  .savebar.pending{background:#fbf4e6;color:#8a6d2f}
+  .savebar.ok{background:#eef0e2;color:var(--moss)}
+  .savebar.fail{background:#f4e6e2;color:var(--rust);cursor:pointer}
+  .review{text-align:left;margin:24px 0 8px;border-top:1px solid var(--line);padding-top:18px}
+  .review h3{font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .rrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #e2dac8;font-size:14px}
+  .rrow:last-child{border-bottom:none}
+  .rdot{width:9px;height:9px;border-radius:50%;flex:none}
+  .rdot.y{background:var(--moss)}.rdot.n{background:var(--rust)}
+  .rrow .rname{color:var(--stone);font-weight:600}
+  .rrow .rpick{color:var(--muted);margin-left:auto;font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px}
+  .hidden{display:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="masthead"><span class="eyebrow">지구과학 · 암석 관찰</span></div>
+  <h1>암석 맞히기<span class="sub">사진 속 조직과 생성 과정을 읽어 이름을 맞혀 보세요</span></h1>
+  <div class="rule"></div>
+
+  <div class="card">
+    <!-- LOGIN -->
+    <section class="login" id="screen-login">
+      <p>시작하려면 이름과 학번을 입력하세요. 풀이 기록은 학습 자료로 저장됩니다.</p>
+      <div class="field" id="f-name">
+        <label for="in-name">이름</label>
+        <input id="in-name" type="text" autocomplete="name" placeholder="예: 김지현" maxlength="20">
+        <span class="err">이름을 입력해 주세요.</span>
+      </div>
+      <div class="field" id="f-id">
+        <label for="in-id">학번 (학생 ID)</label>
+        <input id="in-id" type="text" inputmode="numeric" autocomplete="off" placeholder="예: 10315" maxlength="20">
+        <span class="err">학번을 입력해 주세요.</span>
+      </div>
+      <div class="field">
+        <label for="in-class">학급 (선택)</label>
+        <input id="in-class" type="text" autocomplete="off" placeholder="예: 1학년 3반" maxlength="20">
+      </div>
+      <div class="cats">
+        <span class="chip">화성암 · 퇴적암 · 변성암</span>
+        <span class="chip">4지선다 · 10문항</span>
+      </div>
+      <button class="btn btn-primary" id="startBtn">퀴즈 시작하기</button>
+    </section>
+
+    <!-- QUIZ -->
+    <section class="hidden" id="screen-quiz">
+      <div class="qhead">
+        <span class="who" id="who"></span>
+        <span class="count" id="count">1 / 10</span>
+        <span class="score">점수 <b id="score">0</b></span>
+      </div>
+      <div class="progress"><i id="bar" style="width:0%"></i></div>
+      <div class="photo">
+        <img id="photo" alt="암석 표본 사진">
+        <div class="ph" id="ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="M3 16l5-6 4 5 3-4 6 5"/></svg>
+          <span id="phText">사진 불러오는 중…</span>
+        </div>
+        <span class="credit" id="credit"></span>
+      </div>
+      <p class="prompt">이 암석의 이름은 <b>무엇일까요?</b></p>
+      <div class="opts" id="opts"></div>
+      <div class="explain" id="explain"><span class="verdict" id="verdict"></span><span id="explainText"></span></div>
+      <div class="next" id="nextWrap"><button class="btn btn-primary" id="nextBtn">다음 문제</button></div>
+    </section>
+
+    <!-- RESULT -->
+    <section class="hidden result" id="screen-result">
+      <div class="grade" id="grade">RESULT</div>
+      <div class="big"><span id="finalScore">0</span> / <span id="finalTotal">10</span></div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultMsg"></p>
+      <div id="savebar" class="savebar pending">결과 저장 중…</div>
+      <div class="review"><h3>문항별 결과</h3><div id="reviewList"></div></div>
+      <button class="btn btn-primary" id="retryBtn" style="margin-top:8px">다시 풀기</button>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ===========================================================
+   설정 — 배포한 Google Apps Script 웹앱 URL을 여기 붙여넣으세요.
+   비워 두면 저장을 건너뜁니다(로컬 미리보기).
+   =========================================================== */
+const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxxTa1J2es2taUwEV9meiO1i8psjiFtHRP4a1wMHWsrbWTYkd78pCcZ6-BPF8vegtEu/exec"; // 예: "https://script.google.com/macros/s/AKfy.../exec"
+const QUESTION_COUNT = 10;
+
+const ROCKS = [
+  {name:"화강암",cat:"화성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Granite.jpg/640px-Granite.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/BarreGranite.jpg/640px-BarreGranite.jpg"],
+   why:"마그마가 지하 깊은 곳에서 천천히 식은 심성암. 석영·장석·운모 결정이 눈에 보일 만큼 크고 고르게 박혀 있습니다."},
+  {name:"현무암",cat:"화성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Vesicular_basalt.JPG/640px-Vesicular_basalt.JPG",
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Basalt.JPG/640px-Basalt.JPG"],
+   why:"용암이 지표에서 빠르게 식은 화산암. 결정이 매우 작아 치밀하고 어두우며, 가스가 빠져나간 기공이 자주 보입니다."},
+  {name:"유문암",cat:"화성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/RhyoliteUSGOV.jpg/640px-RhyoliteUSGOV.jpg"],
+   why:"화강암과 성분이 같지만 지표에서 빠르게 식은 화산암. 밝은 색을 띠고 결정이 작아 치밀하며 유동 구조가 나타나기도 합니다."},
+  {name:"반려암",cat:"화성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/GabbroRockCreek1.jpg/640px-GabbroRockCreek1.jpg"],
+   why:"현무암과 성분이 같은 심성암. 깊은 곳에서 천천히 식어 결정이 크며, 어두운 유색광물이 많아 검고 무겁게 보입니다."},
+  {name:"사암",cat:"퇴적암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Sandstone_1_Sichuan.jpg/640px-Sandstone_1_Sichuan.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Sandstone%28quartz%29USGOV.jpg/640px-Sandstone%28quartz%29USGOV.jpg"],
+   why:"모래 알갱이가 다져지고 굳은 퇴적암. 알갱이가 손끝에 만져질 만큼 거칠고 층리가 나타나는 경우가 많습니다."},
+  {name:"석회암",cat:"퇴적암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Oolitic_limestone_%28Salem_Limestone%2C_Middle_Mississippian%3B_southern_Indiana%2C_USA%29_1.jpg/640px-Oolitic_limestone_%28Salem_Limestone%2C_Middle_Mississippian%3B_southern_Indiana%2C_USA%29_1.jpg"],
+   why:"주로 탄산칼슘으로 이루어진 퇴적암. 생물 기원이 많아 화석을 품기도 하며 묽은 염산에 거품을 내며 반응합니다."},
+  {name:"셰일",cat:"퇴적암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Rochester_Shale.jpg/640px-Rochester_Shale.jpg"],
+   why:"진흙·점토가 굳은 아주 고운 퇴적암. 얇은 층으로 잘 쪼개지며 알갱이가 보이지 않을 만큼 치밀합니다."},
+  {name:"역암",cat:"퇴적암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Conglomerate-quartzitic.jpg/640px-Conglomerate-quartzitic.jpg"],
+   why:"자갈(2mm 이상)이 모래·점토에 섞여 굳은 퇴적암. 둥근 자갈이 박혀 있어 눈으로 쉽게 구별됩니다."},
+  {name:"편마암",cat:"변성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Gneiss_-_Geological_Museum%2C_Copenhagen.jpg/640px-Gneiss_-_Geological_Museum%2C_Copenhagen.jpg"],
+   why:"높은 온도·압력으로 강하게 변성된 암석. 밝은 광물과 어두운 광물이 줄무늬(편마 구조)를 이룹니다."},
+  {name:"대리암",cat:"변성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Marble_Quarry.JPG/640px-Marble_Quarry.JPG"],
+   why:"석회암이 변성된 암석. 방해석이 재결정되어 반짝이고 밝고 균질해 조각·건축에 널리 쓰입니다."},
+  {name:"편암",cat:"변성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Schist_detail.jpg/640px-Schist_detail.jpg"],
+   why:"운모 등 판상 광물이 한 방향으로 배열된 변성암. 표면이 비늘처럼 반짝이고 얇게 쪼개지는 엽리가 발달합니다."},
+  {name:"규암",cat:"변성암",credit:"Wikimedia Commons",
+   img:["https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Quartzite.jpg/640px-Quartzite.jpg"],
+   why:"사암이 변성되어 석영이 재결정된 매우 단단한 암석. 알갱이 경계가 사라져 치밀하고 깨진 면이 유리처럼 반짝입니다."}
+];
+
+const $ = id => document.getElementById(id);
+const now = () => new Date();
+const iso = d => d.toISOString();
+
+let student=null, deck=[], idx=0, score=0, answered=false;
+let sessionId="", sessionStart=null, qStart=null, events=[];
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function show(s){["screen-login","screen-quiz","screen-result"].forEach(x=>$(x).classList.add("hidden"));$(s).classList.remove("hidden");}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+function validateLogin(){
+  const name=$("in-name").value.trim(), id=$("in-id").value.trim();
+  let ok=true;
+  $("f-name").classList.toggle("invalid",!name); if(!name) ok=false;
+  $("f-id").classList.toggle("invalid",!id); if(!id) ok=false;
+  return ok?{name,id,cls:$("in-class").value.trim()}:null;
+}
+
+function buildDeck(){
+  const picks=shuffle(ROCKS).slice(0,QUESTION_COUNT);
+  deck=picks.map(rock=>{
+    const distract=shuffle(ROCKS.filter(r=>r.name!==rock.name)).slice(0,3);
+    return {rock,options:shuffle([rock,...distract])};
+  });
+}
+
+function loadImage(rock){
+  const img=$("photo"), ph=$("ph"), phText=$("phText");
+  img.style.opacity=0; ph.style.display="flex"; phText.textContent="사진 불러오는 중…";
+  let i=0;
+  const tryNext=()=>{
+    if(i>=rock.img.length){ ph.style.display="flex"; phText.textContent=rock.name+" (사진을 불러오지 못했습니다)"; return; }
+    img.onload=()=>{ ph.style.display="none"; img.style.opacity=1; };
+    img.onerror=()=>{ i++; tryNext(); };
+    img.src=rock.img[i];
+  };
+  tryNext();
+  $("credit").textContent="© "+rock.credit;
+}
+
+function renderQuestion(){
+  answered=false; qStart=now();
+  const q=deck[idx];
+  $("who").innerHTML='<b>'+escapeHtml(student.name)+'</b> · '+escapeHtml(student.id);
+  $("count").textContent=(idx+1)+" / "+deck.length;
+  $("score").textContent=score;
+  $("bar").style.width=(idx/deck.length*100)+"%";
+  $("photo").alt="암석 표본 사진 "+(idx+1);
+  loadImage(q.rock);
+  $("explain").className="explain";
+  $("nextWrap").classList.remove("show");
+  const opts=$("opts"); opts.innerHTML="";
+  const keys=["A","B","C","D"];
+  q.options.forEach((opt,i)=>{
+    const b=document.createElement("button");
+    b.className="opt"; b.type="button";
+    b.innerHTML='<span class="k">'+keys[i]+'</span><span>'+escapeHtml(opt.name)+'</span>';
+    b.onclick=()=>choose(b,opt,q);
+    opts.appendChild(b);
+  });
+  $("nextBtn").textContent=(idx===deck.length-1)?"결과 보기":"다음 문제";
+}
+
+function choose(btn,opt,q){
+  if(answered) return; answered=true;
+  const correct=opt.name===q.rock.name;
+  const elapsed=(now()-qStart)/1000;
+  if(correct) score++;
+  $("score").textContent=score;
+  [...$("opts").children].forEach(b=>{
+    b.disabled=true;
+    const label=b.querySelector("span:last-child").textContent;
+    if(label===q.rock.name) b.classList.add("correct"); else b.classList.add("dim");
+  });
+  if(!correct){ btn.classList.remove("dim"); btn.classList.add("wrong"); }
+  const ex=$("explain");
+  ex.classList.add("show", correct?"ok":"no");
+  $("verdict").textContent=correct?"정답이에요":"아쉬워요 · 정답은 "+q.rock.name;
+  $("explainText").textContent="["+q.rock.cat+"] "+q.rock.why;
+  $("nextWrap").classList.add("show");
+  $("bar").style.width=((idx+1)/deck.length*100)+"%";
+  events.push({
+    q_no:idx+1, rock:q.rock.name, category:q.rock.cat,
+    options:q.options.map(o=>o.name).join(" | "),
+    chosen:opt.name, correct:correct?1:0, seconds:Math.round(elapsed*10)/10
+  });
+}
+
+function next(){ if(idx<deck.length-1){ idx++; renderQuestion(); } else finish(); }
+
+function finish(){
+  show("screen-result");
+  const total=deck.length, pct=score/total;
+  $("finalScore").textContent=score; $("finalTotal").textContent=total;
+  let grade,title,msg;
+  if(pct===1){grade="완벽";title="암석 전문가!";msg="12종을 완벽하게 구별해 냈어요. 조직과 생성 과정까지 정확히 읽고 있네요.";}
+  else if(pct>=.7){grade="우수";title="관찰력이 뛰어나요";msg="대부분 정확히 맞혔어요. 헷갈린 표본만 다시 살펴보면 완벽에 가까워집니다.";}
+  else if(pct>=.4){grade="양호";title="조금만 더!";msg="기본은 잡혔어요. 결정 크기와 층리·엽리 같은 핵심 단서에 집중해 보세요.";}
+  else {grade="복습";title="다시 도전해요";msg="화성암·퇴적암·변성암의 대표적인 조직 차이부터 정리하면 훨씬 쉬워집니다.";}
+  $("grade").textContent=grade; $("resultTitle").textContent=title; $("resultMsg").textContent=msg;
+  const list=$("reviewList"); list.innerHTML="";
+  events.forEach(e=>{
+    const row=document.createElement("div"); row.className="rrow";
+    row.innerHTML='<span class="rdot '+(e.correct?"y":"n")+'"></span>'
+      +'<span class="rname">'+escapeHtml(e.rock)+'</span>'
+      +'<span class="rpick">'+(e.correct?"정답":"선택: "+escapeHtml(e.chosen))+'</span>';
+    list.appendChild(row);
+  });
+  saveResults();
+}
+
+function buildPayload(){
+  const finished=now();
+  return {
+    session_id:sessionId, name:student.name, student_id:student.id, class:student.cls,
+    started_at:iso(sessionStart), finished_at:iso(finished),
+    duration_sec:Math.round((finished-sessionStart)/1000),
+    total:deck.length, score:score, accuracy:Math.round(score/deck.length*100),
+    user_agent:navigator.userAgent, answers:events
+  };
+}
+
+async function saveResults(){
+  const bar=$("savebar");
+  if(!GAS_ENDPOINT){
+    bar.className="savebar ok";
+    bar.textContent="저장 서버가 설정되지 않아 기록을 건너뛰었습니다(로컬 미리보기).";
+    return;
+  }
+  bar.className="savebar pending"; bar.textContent="결과 저장 중…"; bar.onclick=null;
+  try{
+    await fetch(GAS_ENDPOINT,{
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(buildPayload())
+    });
+    bar.className="savebar ok"; bar.textContent="결과가 저장되었습니다 ✓";
+  }catch(err){
+    bar.className="savebar fail";
+    bar.textContent="저장에 실패했어요. 여기를 눌러 다시 시도하세요.";
+    bar.onclick=saveResults;
+  }
+}
+
+function startGame(){
+  buildDeck(); idx=0; score=0; events=[];
+  sessionId="s-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);
+  sessionStart=now();
+  show("screen-quiz"); renderQuestion();
+}
+
+$("startBtn").onclick=()=>{ const s=validateLogin(); if(!s) return; student=s; startGame(); };
+$("nextBtn").onclick=next;
+$("retryBtn").onclick=()=>{ startGame(); };
+["in-name","in-id"].forEach(id=>$(id).addEventListener("input",()=>{
+  $(id==="in-name"?"f-name":"f-id").classList.remove("invalid");
+}));
+$("in-id").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const s=validateLogin(); if(s){student=s;startGame();} }});
+</script>
+</body>
+</html>
